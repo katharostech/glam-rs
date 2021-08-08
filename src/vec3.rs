@@ -6,8 +6,11 @@ use crate::{BVec3, DVec2, DVec4, IVec2, IVec4, UVec2, UVec4, Vec2, Vec4, XYZ};
 use core::fmt;
 use core::{f32, ops::*};
 
-#[cfg(not(feature = "std"))]
+#[cfg(all(not(feature = "std"), not(feature = "wasl")))]
 use num_traits::Float;
+
+#[cfg(all(not(feature = "std"), feature = "wasl"))]
+use crate::core::traits::scalar::*;
 
 #[cfg(all(
     target_arch = "x86",

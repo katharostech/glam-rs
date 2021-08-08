@@ -2,7 +2,7 @@ use crate::core::storage::Columns3;
 use crate::{DMat2, DMat3, DVec2, Mat2, Mat3, Mat3A, Vec2, Vec3A};
 use core::ops::{Add, Deref, DerefMut, Mul, Sub};
 
-#[cfg(not(feature = "std"))]
+#[cfg(all(not(feature = "std"), not(feature = "wasl")))]
 use num_traits::Float;
 
 macro_rules! define_affine2_struct {

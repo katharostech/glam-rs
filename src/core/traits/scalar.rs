@@ -33,6 +33,7 @@ pub trait Float: Num + Copy + core::ops::Neg<Output = Self> {
     fn sin(self) -> Self;
     fn sin_cos(self) -> (Self, Self);
     fn tan(self) -> Self;
+    fn atan2(self, n: Self) -> Self;
 }
 
 #[cfg(not(feature = "libm"))]
@@ -42,7 +43,83 @@ macro_rules! impl_num_trait {
     };
 }
 
-#[cfg(not(feature = "libm"))]
+#[cfg(feature = "wasl")]
+mod wasl_bindings {
+    pub mod i32 {
+        extern "C" {
+            #[link_name = "abs_i32"]
+            pub fn abs(n: i32) -> i32;
+            #[link_name = "signum_i32"]
+            pub fn signum(n: i32) -> i32;
+        }
+    }
+    pub mod f32 {
+        extern "C" {
+            #[link_name = "abs_f32"]
+            pub fn abs(n: f32) -> f32;
+            #[link_name = "signum_f32"]
+            pub fn signum(n: f32) -> f32;
+            #[link_name = "asin_f32"]
+            pub fn asin(n: f32) -> f32;
+            #[link_name = "acos_f32"]
+            pub fn acos(n: f32) -> f32;
+            #[link_name = "ceil_f32"]
+            pub fn ceil(n: f32) -> f32;
+            #[link_name = "exp_f32"]
+            pub fn exp(n: f32) -> f32;
+            #[link_name = "floor_f32"]
+            pub fn floor(n: f32) -> f32;
+            #[link_name = "pow_f32"]
+            pub fn pow(n: f32, n2: f32) -> f32;
+            #[link_name = "round_f32"]
+            pub fn round(n: f32) -> f32;
+            #[link_name = "sin_f32"]
+            pub fn sin(n: f32) -> f32;
+            #[link_name = "scos_f32"]
+            pub fn cos(n: f32) -> f32;
+            #[link_name = "sqrt_f32"]
+            pub fn sqrt(n: f32) -> f32;
+            #[link_name = "tan_f32"]
+            pub fn tan(n: f32) -> f32;
+            #[link_name = "atan2_f32"]
+            pub fn atan2(n: f32, n2: f32) -> f32;
+        }
+    }
+    pub mod f64 {
+        extern "C" {
+            #[link_name = "abs_f64"]
+            pub fn abs(n: f64) -> f64;
+            #[link_name = "signum_f64"]
+            pub fn signum(n: f64) -> f64;
+            #[link_name = "asin_f64"]
+            pub fn asin(n: f64) -> f64;
+            #[link_name = "acos_f64"]
+            pub fn acos(n: f64) -> f64;
+            #[link_name = "ceil_f64"]
+            pub fn ceil(n: f64) -> f64;
+            #[link_name = "exp_f64"]
+            pub fn exp(n: f64) -> f64;
+            #[link_name = "floor_f64"]
+            pub fn floor(n: f64) -> f64;
+            #[link_name = "pow_f64"]
+            pub fn pow(n: f64, n2: f64) -> f64;
+            #[link_name = "round_f64"]
+            pub fn round(n: f64) -> f64;
+            #[link_name = "sin_f64"]
+            pub fn sin(n: f64) -> f64;
+            #[link_name = "scos_f64"]
+            pub fn cos(n: f64) -> f64;
+            #[link_name = "sqrt_f64"]
+            pub fn sqrt(n: f64) -> f64;
+            #[link_name = "tan_f64"]
+            pub fn tan(n: f64) -> f64;
+            #[link_name = "atan2_f64"]
+            pub fn atan2(n: f64, n2: f64) -> f64;
+        }
+    }
+}
+
+#[cfg(all(feature = "std", not(feature = "libm")))]
 macro_rules! impl_signed_trait {
     ($t:ident) => {
         impl_num_trait!($t);
@@ -60,7 +137,25 @@ macro_rules! impl_signed_trait {
     };
 }
 
-#[cfg(not(feature = "libm"))]
+#[cfg(feature = "wasl")]
+macro_rules! impl_signed_trait {
+    ($t:ident) => {
+        impl_num_trait!($t);
+
+        impl Signed for $t {
+            #[inline(always)]
+            fn abs(self) -> Self {
+                unsafe { wasl_bindings::$t::abs(self) }
+            }
+            #[inline(always)]
+            fn signum(self) -> Self {
+                unsafe { wasl_bindings::$t::signum(self) }
+            }
+        }
+    };
+}
+
+#[cfg(all(feature = "std", not(feature = "libm")))]
 macro_rules! impl_float_trait {
     ($t:ident) => {
         impl_signed_trait!($t);
@@ -122,9 +217,84 @@ macro_rules! impl_float_trait {
             fn tan(self) -> Self {
                 $t::tan(self)
             }
+            #[inline(always)]
+            fn atan2(self, n: Self) -> Self {
+                $t::atan2(self, n)
+            }
         }
     };
 }
+
+#[cfg(feature = "wasl")]
+macro_rules! impl_float_trait {
+    ($t:ident) => {
+        impl_signed_trait!($t);
+
+        impl Float for $t {
+            #[inline(always)]
+            fn asin(self) -> Self {
+                unsafe { wasl_bindings::$t::asin(self) }
+            }
+            #[inline(always)]
+            fn acos(self) -> Self {
+                unsafe { wasl_bindings::$t::acos(self) }
+            }
+            #[inline(always)]
+            fn ceil(self) -> Self {
+                unsafe { wasl_bindings::$t::ceil(self) }
+            }
+            #[inline(always)]
+            fn exp(self) -> Self {
+                unsafe { wasl_bindings::$t::exp(self) }
+            }
+            #[inline(always)]
+            fn floor(self) -> Self {
+                unsafe { wasl_bindings::$t::floor(self) }
+            }
+            #[inline(always)]
+            fn is_finite(self) -> bool {
+                self.is_finite()
+            }
+            #[inline(always)]
+            fn is_nan(self) -> bool {
+                self.is_nan()
+            }
+            #[inline(always)]
+            fn powf(self, n: Self) -> Self {
+                unsafe { wasl_bindings::$t::pow(self, n) }
+            }
+            #[inline(always)]
+            fn recip(self) -> Self {
+                1.0 / self
+            }
+            #[inline(always)]
+            fn round(self) -> Self {
+                unsafe { wasl_bindings::$t::round(self) }
+            }
+            #[inline(always)]
+            fn sin(self) -> Self {
+                unsafe { wasl_bindings::$t::sin(self) }
+            }
+            #[inline(always)]
+            fn sin_cos(self) -> (Self, Self) {
+                unsafe { (wasl_bindings::$t::sin(self), wasl_bindings::$t::cos(self)) }
+            }
+            #[inline(always)]
+            fn sqrt(self) -> Self {
+                unsafe { wasl_bindings::$t::sqrt(self) }
+            }
+            #[inline(always)]
+            fn tan(self) -> Self {
+                unsafe { wasl_bindings::$t::tan(self) }
+            }
+            #[inline(always)]
+            fn atan2(self, n: Self) -> Self {
+                unsafe { wasl_bindings::$t::atan2(self, n) }
+            }
+        }
+    };
+}
+
 
 #[cfg(not(feature = "libm"))]
 impl_float_trait!(f32);

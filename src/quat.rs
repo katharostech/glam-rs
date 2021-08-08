@@ -6,8 +6,11 @@ use crate::euler::{EulerFromQuaternion, EulerRot, EulerToQuaternion};
 use crate::{DMat3, DMat4, DVec3, DVec4};
 use crate::{Mat3, Mat4, Vec3, Vec3A, Vec4};
 
-#[cfg(not(feature = "std"))]
+#[cfg(all(not(feature = "std"), not(feature = "wasl")))]
 use num_traits::Float;
+
+#[cfg(all(not(feature = "std"), feature = "wasl"))]
+use crate::core::traits::scalar::*;
 
 #[cfg(all(
     target_arch = "x86",

@@ -4,8 +4,11 @@ use crate::{BVec2, DVec3, IVec3, UVec3, Vec3, XY};
 use core::fmt;
 use core::{f32, ops::*};
 
-#[cfg(not(feature = "std"))]
+#[cfg(all(not(feature = "std"), not(feature = "wasl")))]
 use num_traits::Float;
+
+#[cfg(all(not(feature = "std"), feature = "wasl"))]
+use crate::core::traits::scalar::*;
 
 #[cfg(feature = "std")]
 use std::iter::{Product, Sum};

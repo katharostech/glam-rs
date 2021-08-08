@@ -2,8 +2,11 @@ use crate::core::storage::Columns4;
 use crate::{DMat3, DMat4, DQuat, DVec3, Mat3, Mat3A, Mat4, Quat, Vec3, Vec3A};
 use core::ops::{Add, Deref, DerefMut, Mul, Sub};
 
-#[cfg(not(feature = "std"))]
+#[cfg(all(not(feature = "std"), not(feature = "wasl")))]
 use num_traits::Float;
+
+#[cfg(all(not(feature = "std"), feature = "wasl"))]
+use crate::core::traits::scalar::*;
 
 macro_rules! define_affine3_struct {
     ($affine3:ident, $matrix:ident, $column:ident) => {
